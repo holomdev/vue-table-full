@@ -1,0 +1,212 @@
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import { ElInput, ElPopover, ElButton, ElRadioGroup, ElRadio } from 'element-plus'
+import { Search, Message, Phone } from '@element-plus/icons-vue'
+import { STATUS_OPTIONS, WORKER_TYPE_OPTIONS, DATE_FILTER_OPTIONS } from '../constants'
+import { useDebounce } from '@/composables/useDebounce'
+
+const props = defineProps({
+  searchFilters: {
+    type: Object,
+    required: true
+  },
+  selectedStatus: {
+    type: String,
+    required: true
+  },
+  selectedWorkerType: {
+    type: String,
+    required: true
+  },
+  selectedDateFilter: {
+    type: String,
+    required: true
+  }
+})
+
+const emit = defineEmits([
+  'update:searchFilters',
+  'update:selectedStatus',
+  'update:selectedWorkerType',
+  'update:selectedDateFilter'
+])
+
+const localSearchFilters = ref({ ...props.searchFilters })
+const debouncedSearchFilters = useDebounce(localSearchFilters)
+
+watch(debouncedSearchFilters, (newVal) => {
+  emit('update:searchFilters', newVal)
+}, { deep: true })
+
+watch(() => props.searchFilters, (newVal) => {
+  if (JSON.stringify(localSearchFilters.value) !== JSON.stringify(newVal)) {
+    localSearchFilters.value = { ...newVal }
+  }
+}, { deep: true })
+</script>
+
+<template>
+  <div class="flex flex-wrap gap-3">
+    <div class="flex-1 min-w-[200px]">
+      <el-input
+        v-model="localSearchFilters.firstName"
+        placeholder="Buscar por nombre..."
+        class="nextui-input"
+        clearable
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
+    </div>
+    
+    <div class="flex-1 min-w-[200px]">
+      <el-input
+        v-model="localSearchFilters.lastName"
+        placeholder="Buscar por apellido..."
+        class="nextui-input"
+        clearable
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
+    </div>
+    
+    <div class="flex-1 min-w-[200px]">
+      <el-input
+        v-model="localSearchFilters.email"
+        placeholder="Buscar por email..."
+        class="nextui-input"
+        clearable
+      >
+        <template #prefix>
+          <el-icon><Message /></el-icon>
+        </template>
+      </el-input>
+    </div>
+
+    <div class="flex-1 min-w-[200px]">
+      <el-input
+        v-model="localSearchFilters.phone"
+        placeholder="Buscar por teléfono..."
+        class="nextui-input"
+        clearable
+      >
+        <template #prefix>
+          <el-icon><Phone /></el-icon>
+        </template>
+      </el-input>
+    </div>
+    
+    <el-popover
+      placement="bottom-start"
+      trigger="click"
+      :width="240"
+      popper-class="nextui-popover"
+    >
+      <template #reference>
+        <button class="nextui-button nextui-button-secondary">
+          Filtros
+        </button>
+      </template>
+      
+      <div class="space-y-4">
+        <div>
+          <h4 class="mb-2 text-sm font-medium">Tipo de Trabajador</h4>
+          <el-radio-group 
+            :model-value="selectedWorkerType"
+            @update:modelValue="value => emit('update:selectedWorkerType', value)"
+            class="nextui-radio-group"
+          >
+            <div class="flex items-start">
+              <el-radio label="todos" class="!mr-0">Todos</el-radio>
+            </div>
+            <div v-for="type in WORKER_TYPE_OPTIONS" :key="type" class="flex items-start">
+              <el-radio :label="type" class="!mr-0">
+                {{ type.charAt(0).toUpperCase() + type.slice(1) }}
+              </el-radio>
+            </div>
+          </el-radio-group>
+        </div>
+        
+        <div>
+          <h4 class="mb-2 text-sm font-medium">Estado</h4>
+          <el-radio-group 
+            :model-value="selectedStatus"
+            @update:modelValue="value => emit('update:selectedStatus', value)"
+            class="nextui-radio-group"
+          >
+            <div class="flex items-start">
+              <el-radio label="todos" class="!mr-0">Todos</el-radio>
+            </div>
+            <div v-for="status in STATUS_OPTIONS" :key="status" class="flex items-start">
+              <el-radio :label="status" class="!mr-0">
+                {{ status.charAt(0).toUpperCase() + status.slice(1) }}
+              </el-radio>
+            </div>
+          </el-radio-group>
+        </div>
+
+        <div>
+          <h4 class="mb-2 text-sm font-medium">Fecha de Alta</h4>
+          <el-radio-group 
+            :model-value="selectedDateFilter"
+            @update:modelValue="value => emit('update:selectedDateFilter', value)"
+            class="nextui-radio-group"
+          >
+            <div class="flex items-start">
+              <el-radio label="todos" class="!mr-0">Todos</el-radio>
+            </div>
+            <div class="flex items-start">
+              <el-radio label="ultimos7dias" class="!mr-0">Últimos 7 días</el-radio>
+            </div>
+            <div class="flex items-start">
+              <el-radio label="ultimos30dias" class="!mr-0">Últimos 30 días</el-radio>
+            </div>
+            <div class="flex items-start">
+              <el-radio label="ultimos60dias" class="!mr-0">Últimos 60 días</el-radio>
+            </div>
+          </el-radio-group>
+        </div>
+      </div>
+    </el-popover>
+  </div>
+</template>
+
+<style>
+:deep(.el-input__wrapper) {
+  @apply border border-gray-300 rounded-lg shadow-none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  @apply border-primary-400 ring-2 ring-primary-400 ring-opacity-50 !important;
+}
+
+:deep(.el-input__inner) {
+  height: 40px !important;
+}
+
+:deep(.el-radio__input.is-checked .el-radio__inner) {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+:deep(.el-radio__label) {
+  font-size: 0.875rem !important;
+}
+
+:deep(.el-radio) {
+  @apply flex items-center h-8 w-full !m-0;
+}
+
+:deep(.el-radio__input) {
+  @apply !mr-2;
+}
+
+.dark :deep(.el-radio__label) {
+  @apply text-gray-300;
+}
+</style>
